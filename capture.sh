@@ -54,7 +54,7 @@ build_json() {
 mapfile -t ALL_IMAGES < <(ls -1t "${SCRIPT_DIR}"/*.jpg 2>/dev/null)
 
 # Slice to latest 10
-LATEST_IMAGES=("${ALL_IMAGES[@]:0:10}")
+LATEST_IMAGES=("${ALL_IMAGES[@]:0:12}")
 
 # Write images_all.json
 echo "Updating ${JSON_ALL}..."
