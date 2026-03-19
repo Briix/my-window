@@ -1,14 +1,20 @@
 [
-    {
-        "filename": "20260319_074347.jpg",
-        "path": "/home/blueberry/code/my-window/20260319_074347.jpg",
-        "size_bytes": 723902,
-        "modified": "2026-03-19 07:43:53"
-    },
-    {
-        "filename": "20260319_052637.jpg",
-        "path": "/home/blueberry/code/my-window/20260319_052637.jpg",
-        "size_bytes": 1529166,
-        "modified": "2026-03-19 05:26:43"
-    }
+  {
+    "filename": "20260319_100057.jpg",
+    "path": "/home/blueberry/code/my-window/20260319_100057.jpg",
+    "size_bytes": 564949,
+    "modified": "2026-03-19 10:01:03"
+  },
+  {
+    "filename": "20260319_074347.jpg",
+    "path": "/home/blueberry/code/my-window/20260319_074347.jpg",
+    "size_bytes": 723902,
+    "modified": "2026-03-19 07:43:53"
+  },
+  {
+    "filename": "20260319_052637.jpg",
+    "path": "/home/blueberry/code/my-window/20260319_052637.jpg",
+    "size_bytes": 1529166,
+    "modified": "2026-03-19 05:26:43"
+  }
 ]
