@@ -33,40 +33,39 @@ if [ $? -ne 0 ]; then
 fi
 
 # --- 3. Build JSON files ---
+FILESIZE=$(stat -c%s "${OUTPUT_PATH}" 2>/dev/null || echo 0)
+MODIFIED=$(stat -c%y "${OUTPUT_PATH}" 2>/dev/null | cut -d'.' -f1)
+NEW_ENTRY="{\"filename\":\"${FILENAME}\",\"path\":\"${OUTPUT_PATH}\",\"size_bytes\":${FILESIZE},\"modified\":\"${MODIFIED}\"}"
 
-# Helper function to build a JSON array from an array of image paths
-build_json() {
-    local -n _images=$1
-    local json="["
-    local first=true
-    for IMG in "${_images[@]}"; do
-        BASENAME=$(basename "${IMG}")
-        FILESIZE=$(stat -c%s "${IMG}" 2>/dev/null || echo 0)
-        MODIFIED=$(stat -c%y "${IMG}" 2>/dev/null | cut -d'.' -f1)
-        [ "$first" = true ] && first=false || json+=","
-        json+="{\"filename\":\"${BASENAME}\",\"path\":\"${IMG}\",\"size_bytes\":${FILESIZE},\"modified\":\"${MODIFIED}\"}"
-    done
-    json+="]"
-    echo "${json}"
-}
-
-# Collect all .jpg files sorted by modification time (newest first)
-mapfile -t ALL_IMAGES < <(ls -1t "${SCRIPT_DIR}"/*.jpg 2>/dev/null)
-
-# Slice to latest 10
-LATEST_IMAGES=("${ALL_IMAGES[@]:0:12}")
-
-# Write images_all.json
+# Prepend new entry to images_all.json (create if it doesn't exist)
 echo "Updating ${JSON_ALL}..."
-build_json ALL_IMAGES | python3 -m json.tool > "${JSON_ALL}"
+if [ -f "${JSON_ALL}" ]; then
+    EXISTING=$(python3 -c "import json,sys; data=json.load(open('${JSON_ALL}')); print(json.dumps(data))")
+    python3 -c "
+import json, sys
+existing = json.loads(sys.argv[1])
+new_entry = json.loads(sys.argv[2])
+merged = [new_entry] + existing
+print(json.dumps(merged, indent=2))
+" "${EXISTING}" "${NEW_ENTRY}" > "${JSON_ALL}"
+else
+    echo "[${NEW_ENTRY}]" | python3 -m json.tool > "${JSON_ALL}"
+fi
+
 if [ $? -ne 0 ]; then
     echo "Error: Failed to write ${JSON_ALL}." >&2
     exit 1
 fi
 
-# Write images_latest.json
+# Derive images_latest.json as the first 12 entries from images_all.json
 echo "Updating ${JSON_LATEST}..."
-build_json LATEST_IMAGES | python3 -m json.tool > "${JSON_LATEST}"
+python3 -c "
+import json
+with open('${JSON_ALL}') as f:
+    data = json.load(f)
+print(json.dumps(data[:12], indent=2))
+" > "${JSON_LATEST}"
+
 if [ $? -ne 0 ]; then
     echo "Error: Failed to write ${JSON_LATEST}." >&2
     exit 1
