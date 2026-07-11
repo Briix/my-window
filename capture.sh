@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Capture an image with rpicam-still, rotate 180°, and update a JSON index
+# Capture an image with rpicam-jpeg, rotate 180°, and update a JSON index
 
 TIMESTAMP=$(date +"%Y%m%d_%H%M%S")
 FILENAME="${TIMESTAMP}.jpg"
@@ -33,41 +33,51 @@ if [ $? -ne 0 ]; then
 fi
 
 # --- 3. Build JSON files ---
-FILESIZE=$(stat -c%s "${OUTPUT_PATH}" 2>/dev/null || echo 0)
-MODIFIED=$(stat -c%y "${OUTPUT_PATH}" 2>/dev/null | cut -d'.' -f1)
-NEW_ENTRY="{\"filename\":\"${FILENAME}\",\"path\":\"${OUTPUT_PATH}\",\"size_bytes\":${FILESIZE},\"modified\":\"${MODIFIED}\"}"
+echo "Updating JSON files..."
+python3 - "${JSON_ALL}" "${JSON_LATEST}" "${OUTPUT_PATH}" "${FILENAME}" <<'EOF'
+import json, os, sys, datetime
 
-# Prepend new entry to images_all.json (create if it doesn't exist)
-echo "Updating ${JSON_ALL}..."
-if [ -f "${JSON_ALL}" ]; then
-    EXISTING=$(python3 -c "import json,sys; data=json.load(open('${JSON_ALL}')); print(json.dumps(data))")
-    python3 -c "
-import json, sys
-existing = json.loads(sys.argv[1])
-new_entry = json.loads(sys.argv[2])
+json_all_path    = sys.argv[1]
+json_latest_path = sys.argv[2]
+output_path      = sys.argv[3]
+filename         = sys.argv[4]
+
+# Build new entry — parse date from filename so it works even if file is deleted later
+size = os.path.getsize(output_path) if os.path.exists(output_path) else 0
+try:
+    stem = os.path.splitext(filename)[0]
+    modified = datetime.datetime.strptime(stem, "%Y%m%d_%H%M%S").strftime("%Y-%m-%d %H:%M:%S")
+except ValueError:
+    modified = ""
+
+new_entry = {
+    "filename": filename,
+    "path": output_path,
+    "size_bytes": size,
+    "modified": modified
+}
+
+# Load existing entries or start fresh
+if os.path.exists(json_all_path):
+    with open(json_all_path) as f:
+        existing = json.load(f)
+else:
+    existing = []
+
 merged = [new_entry] + existing
-print(json.dumps(merged, indent=2))
-" "${EXISTING}" "${NEW_ENTRY}" > "${JSON_ALL}"
-else
-    echo "[${NEW_ENTRY}]" | python3 -m json.tool > "${JSON_ALL}"
-fi
+
+with open(json_all_path, "w") as f:
+    json.dump(merged, f, indent=2)
+
+with open(json_latest_path, "w") as f:
+    json.dump(merged[:10], f, indent=2)
+
+print(f"images_all.json    → {len(merged)} images")
+print(f"images_latest.json → {min(len(merged), 10)} images")
+EOF
 
 if [ $? -ne 0 ]; then
-    echo "Error: Failed to write ${JSON_ALL}." >&2
-    exit 1
-fi
-
-# Derive images_latest.json as the first 12 entries from images_all.json
-echo "Updating ${JSON_LATEST}..."
-python3 -c "
-import json
-with open('${JSON_ALL}') as f:
-    data = json.load(f)
-print(json.dumps(data[:12], indent=2))
-" > "${JSON_LATEST}"
-
-if [ $? -ne 0 ]; then
-    echo "Error: Failed to write ${JSON_LATEST}." >&2
+    echo "Error: Failed to write JSON files." >&2
     exit 1
 fi
 
