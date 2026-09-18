@@ -1,5 +1,11 @@
 [
   {
+    "filename": "20260918_100237.jpg",
+    "path": "/home/blueberry/code/my-window/20260918_100237.jpg",
+    "size_bytes": 616327,
+    "modified": "2026-09-18 10:02:37"
+  },
+  {
     "filename": "20260918_074507.jpg",
     "path": "/home/blueberry/code/my-window/20260918_074507.jpg",
     "size_bytes": 915487,
@@ -52,11 +58,5 @@
     "path": "/home/blueberry/code/my-window/20260917_132757.jpg",
     "size_bytes": 584976,
     "modified": "2026-09-17 13:27:57"
-  },
-  {
-    "filename": "20260917_111037.jpg",
-    "path": "/home/blueberry/code/my-window/20260917_111037.jpg",
-    "size_bytes": 586712,
-    "modified": "2026-09-17 11:10:37"
   }
 ]
